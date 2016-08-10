@@ -1,0 +1,216 @@
+{{ define "upstream" }}
+	{{/* server <ip>:<port>; */}}
+	server {{ .Address }}:{{ .Port }};
+{{ end }}
+
+# If we receive X-Forwarded-Proto, pass it through; otherwise, pass along the
+# scheme used to connect to this server
+map $http_x_forwarded_proto $proxy_x_forwarded_proto {
+  default $http_x_forwarded_proto;
+  ''      $scheme;
+}
+
+# If we receive Upgrade, set Connection to "upgrade"; otherwise, delete any
+# Connection header that may have been passed to this server
+map $http_upgrade $proxy_connection {
+  default upgrade;
+  '' close;
+}
+
+gzip_types text/plain text/css application/javascript application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+
+log_format vhost '$host $remote_addr - $remote_user [$time_local] '
+                 '"$request" $status $body_bytes_sent '
+                 '"$http_referer" "$http_user_agent"';
+
+access_log off;
+
+{{ if (exists "/etc/nginx/proxy.conf") }}
+include /etc/nginx/proxy.conf;
+{{ else }}
+# HTTP 1.1 support
+proxy_http_version 1.1;
+proxy_buffering off;
+proxy_set_header Host $http_host;
+proxy_set_header Upgrade $http_upgrade;
+proxy_set_header Connection $proxy_connection;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
+
+# Mitigate httpoxy attack
+proxy_set_header Proxy "";
+{{ end }}
+
+server {
+	server_name _; # This is just an invalid value which will never trigger on a real hostname.
+	listen 80;
+	access_log /var/log/nginx/access.log vhost;
+	return 503;
+}
+
+{{ if (and (exists "/etc/nginx/certs/default.crt") (exists "/etc/nginx/certs/default.key")) -}}
+server {
+	server_name _; # This is just an invalid value which will never trigger on a real hostname.
+	listen 443 ssl http2;
+	access_log /var/log/nginx/access.log vhost;
+	return 503;
+
+	ssl_certificate /etc/nginx/certs/default.crt;
+	ssl_certificate_key /etc/nginx/certs/default.key;
+}
+{{ end -}}
+
+{{ $all := whereExist (combine .Pods .Services) "ObjectMeta.Annotations.virtual_host" -}}
+{{- range $host, $resources := groupByMulti $all "ObjectMeta.Annotations.virtual_host" "," -}}
+
+upstream {{ $host }} {
+{{- range $resource := $resources -}}
+	{{ if hasField $resource ".Spec.ClusterIP" -}}
+		{{/* Resource is a service Service -*/}}
+		{{ $addr := $resource.Spec.ClusterIP -}}
+		{{ if len .Spec.Ports | eq 1 -}}
+			{{/* if only 1 port is exposed, use that -*/}}
+			{{ $portSpec := index $resource.Spec.Ports 0 -}}
+			{{ $port := $portSpec.Port -}}
+			{{- template "upstream" (dict "Address" $addr "Port" $port) -}}
+		{{ else }}
+			{{/* use the virtual_port annotation, falling back to port 80 */}}
+			{{ $port := coalesce $resource.ObjectMeta.Annotations.virtual_port "80" -}}
+			{{ template "upstream" (dict "Address" $addr "Port" $port) -}}
+		{{ end -}}
+	{{ else if hasField $resource ".Status.PodIP" }}
+		{{/* Pod */}}
+		{{ $addr := $resource.Status.PodIP -}}
+		{{ if and (len .Spec.Containers | eq 1) (len (first .Spec.Containers).Ports | eq 1) }}
+			{{/* if the service has a single container exposing a single port, use it */}}
+			{{ $port := (($resource.Spec.Containers | first).Ports | first).ContainerPort -}}
+			{{ template "upstream" (dict "Address" $addr "Port" $port) -}}
+		{{ else }}
+			{{ $port := coalesce $resource.ObjectMeta.Annotations.virtual_port "80" }}
+			{{ template "upstream" (dict "Address" $addr "Port" $port) -}}
+		{{ end -}}
+	{{ end -}}
+{{ end -}}
+}
+
+{{ $default_host := "" -}}
+{{ $default_server := index (dict $host "" $default_host "default_server") $host -}}
+
+{{/* Get the virtual_proto defined by pods/services w/ the same vhost, falling back to "http" */}}
+{{ $proto := or (groupByKeys $resources "ObjectMeta.Annotations.virtual_proto" | first) "http" -}}
+
+{{/* Get the https_method defined by pods/services w/ the same vhost, falling back to "redirect" */}}
+{{ $https_method := or (groupByKeys $resources "ObjectMeta.Annotations.https_method" | first) "redirect" -}}
+
+{{/* Get the first cert name defined by containers w/ the same vhost */}}
+{{ $certName := (groupByKeys $resources "ObjectMeta.Annotations.cert_name" | first) -}}
+
+{{/* Get the best matching cert  by name for the vhost. */}}
+{{ $vhostCert := "" -}}
+
+{{/* vhostCert is actually a filename so remove any suffixes since they are added later */}}
+{{ $vhostCert := replace $vhostCert ".crt" "" -1 -}}
+{{ $vhostCert := replace $vhostCert ".key" "" -1 -}}
+
+{{/* Use the cert specified on the container or fallback to the best vhost match */}}
+{{ $cert := (coalesce $certName $vhostCert) -}}
+
+{{ $is_https := (and (ne $cert "") (exists (printf "/etc/nginx/certs/%s.crt" $cert)) (exists (printf "/etc/nginx/certs/%s.key" $cert))) -}}
+
+{{- if $is_https -}}
+
+{{- if eq $https_method "redirect" -}}
+server {
+	server_name {{ $host }};
+	listen 80 {{ $default_server }};
+	access_log /var/log/nginx/access.log vhost;
+	return 301 https://$host$request_uri;
+}
+{{ end -}}
+
+server {
+	server_name {{ $host }};
+	listen 443 ssl http2 {{ $default_server }};
+	access_log /var/log/nginx/access.log vhost;
+
+	ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+	ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA;
+
+	ssl_prefer_server_ciphers on;
+	ssl_session_timeout 5m;
+	ssl_session_cache shared:SSL:50m;
+
+	ssl_certificate /etc/nginx/certs/{{ (printf "%s.crt" $cert) }};
+	ssl_certificate_key /etc/nginx/certs/{{ (printf "%s.key" $cert) }};
+
+	{{ if (exists (printf "/etc/nginx/certs/%s.dhparam.pem" $cert)) -}}
+	ssl_dhparam {{ printf "/etc/nginx/certs/%s.dhparam.pem" $cert }};
+	{{ end -}}
+
+	{{ if (ne $https_method "noredirect") -}}
+	add_header Strict-Transport-Security "max-age=31536000";
+	{{ end -}}
+
+	{{ if (exists (printf "/etc/nginx/vhost.d/%s" $host)) -}}
+	include {{ printf "/etc/nginx/vhost.d/%s" $host }};
+	{{ else if (exists "/etc/nginx/vhost.d/default") }}
+	include /etc/nginx/vhost.d/default;
+	{{ end -}}
+
+	location / {
+		proxy_pass {{ trim $proto }}://{{ trim $host }};
+		{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) -}}
+		auth_basic	"Restricted {{ $host }}";
+		auth_basic_user_file	{{ (printf "/etc/nginx/htpasswd/%s" $host) }};
+		{{ end -}}
+		{{ if (exists (printf "/etc/nginx/vhost.d/%s_location" $host)) -}}
+			include {{ printf "/etc/nginx/vhost.d/%s_location" $host}};
+		{{ else if (exists "/etc/nginx/vhost.d/default_location") -}}
+			include /etc/nginx/vhost.d/default_location;
+		{{ end -}}
+		}
+}
+
+{{- end -}}
+
+{{- if or (not $is_https) (eq $https_method "noredirect") -}}
+
+server {
+	server_name {{ $host }};
+	listen 80 {{ $default_server }};
+	access_log /var/log/nginx/access.log vhost;
+
+	{{ if (exists (printf "/etc/nginx/vhost.d/%s" $host)) -}}
+	include {{ printf "/etc/nginx/vhost.d/%s" $host }};
+	{{ else if (exists "/etc/nginx/vhost.d/default") -}}
+	include /etc/nginx/vhost.d/default;
+	{{ end -}}
+
+	location / {
+		proxy_pass {{ trim $proto }}://{{ trim $host }};
+		{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) -}}
+		auth_basic	"Restricted {{ $host }}";
+		auth_basic_user_file	{{ (printf "/etc/nginx/htpasswd/%s" $host) }};
+		{{ end -}}
+		{{ if (exists (printf "/etc/nginx/vhost.d/%s_location" $host)) }}
+			include {{ printf "/etc/nginx/vhost.d/%s_location" $host}};
+		{{ else if (exists "/etc/nginx/vhost.d/default_location") }}
+			include /etc/nginx/vhost.d/default_location;
+		{{ end }}
+	}
+}
+
+{{ if (and (not $is_https) (exists "/etc/nginx/certs/default.crt") (exists "/etc/nginx/certs/default.key")) -}}
+server {
+	server_name {{ $host }};
+	listen 443 ssl http2 {{ $default_server }};
+	access_log /var/log/nginx/access.log vhost;
+	return 500;
+
+	ssl_certificate /etc/nginx/certs/default.crt;
+	ssl_certificate_key /etc/nginx/certs/default.key;
+}
+{{ end -}}
+{{ end -}}
+{{ end -}}
