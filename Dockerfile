@@ -19,8 +19,8 @@ ADD https://github.com/jwilder/forego/releases/download/v0.16.1/forego /usr/loca
 RUN chmod u+x /usr/local/bin/forego
 
 # install kube-gen and kubectl
+ADD https://storage.googleapis.com/kubernetes-release/release/v1.3.4/bin/linux/amd64/kubectl /usr/local/bin
 COPY bin/kube-gen-linux-amd64 /usr/local/bin/kube-gen
-COPY bin/kubectl-linux-amd64 /usr/local/bin/kubectl
 RUN chmod +x /usr/local/bin/kube-gen \
   && chmod +x /usr/local/bin/kubectl
 
