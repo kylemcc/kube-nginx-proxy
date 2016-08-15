@@ -19,9 +19,11 @@ ADD https://github.com/jwilder/forego/releases/download/v0.16.1/forego /usr/loca
 RUN chmod u+x /usr/local/bin/forego
 
 # install kube-gen and kubectl
+ENV KUBE_GEN_VERSION 0.1.0
 ADD https://storage.googleapis.com/kubernetes-release/release/v1.3.4/bin/linux/amd64/kubectl /usr/local/bin
-COPY bin/kube-gen-linux-amd64 /usr/local/bin/kube-gen
-RUN chmod +x /usr/local/bin/kube-gen \
+RUN wget https://github.com/kylemcc/kube-gen/releases/download/$KUBE_GEN_VERSION/kube-gen-linux-amd64-$KUBE_GEN_VERSION.1.0.tar.gz \
+  && tar -C /usr/local/bin -xvzf kube-gen-linux-amd64-$KUBE_GEN_VERSION.tar.gz \
+  && rm /kube-gen-linux-amd64-$KUBE_GEN_VERSION \
   && chmod +x /usr/local/bin/kubectl
 
 COPY . /app/
