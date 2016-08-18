@@ -18,8 +18,8 @@ spec:
       # use a nodeSelector to control where pods are scheduled
       # e.g., specify a hostname to run on a single host, or a label to run on a specific group of hosts
       #nodeSelector:
-      #  kubernetes.io/hostname: <host> 
-      #  <label_name>: <label_value> 
+      #  kubernetes.io/hostname: <host>
+      #  <label_name>: <label_value>
       containers:
         -
           name: "kube-nginx-proxy"
