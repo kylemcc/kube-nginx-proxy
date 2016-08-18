@@ -60,8 +60,8 @@ server {
 }
 {{ end -}}
 
-{{ $all := whereExist (combine .Pods .Services) "ObjectMeta.Annotations.virtual_host" -}}
-{{- range $host, $resources := groupByMulti $all "ObjectMeta.Annotations.virtual_host" "," -}}
+{{ $all := whereExist (combine .Pods .Services) "ObjectMeta.Annotations.nginx_proxy.hostname" -}}
+{{- range $host, $resources := groupByMulti $all "ObjectMeta.Annotations.nginx_proxy.hostname" "," -}}
 
 upstream {{ $host }} {
 {{- range $resource := $resources -}}
@@ -74,8 +74,8 @@ upstream {{ $host }} {
 			{{ $port := $portSpec.Port -}}
 			{{- template "upstream" (dict "Address" $addr "Port" $port) -}}
 		{{ else }}
-			{{/* use the virtual_port annotation, falling back to port 80 */}}
-			{{ $port := coalesce $resource.ObjectMeta.Annotations.virtual_port "80" -}}
+			{{/* use the nginx_proxy.port annotation, falling back to port 80 */}}
+			{{ $port := coalesce $resource.ObjectMeta.Annotations.nginx_proxy.port "80" -}}
 			{{ template "upstream" (dict "Address" $addr "Port" $port) -}}
 		{{ end -}}
 	{{ else if hasField $resource ".Status.PodIP" }}
@@ -86,7 +86,7 @@ upstream {{ $host }} {
 			{{ $port := (($resource.Spec.Containers | first).Ports | first).ContainerPort -}}
 			{{ template "upstream" (dict "Address" $addr "Port" $port) -}}
 		{{ else }}
-			{{ $port := coalesce $resource.ObjectMeta.Annotations.virtual_port "80" }}
+			{{ $port := coalesce $resource.ObjectMeta.Annotations.nginx_proxy.port "80" }}
 			{{ template "upstream" (dict "Address" $addr "Port" $port) -}}
 		{{ end -}}
 	{{ end -}}
@@ -96,14 +96,14 @@ upstream {{ $host }} {
 {{ $default_host := "" -}}
 {{ $default_server := index (dict $host "" $default_host "default_server") $host -}}
 
-{{/* Get the virtual_proto defined by pods/services w/ the same vhost, falling back to "http" */}}
-{{ $proto := or (groupByKeys $resources "ObjectMeta.Annotations.virtual_proto" | first) "http" -}}
+{{/* Get the nginx_proxy.proto defined by pods/services w/ the same vhost, falling back to "http" */}}
+{{ $proto := or (groupByKeys $resources "ObjectMeta.Annotations.nginx_proxy.proto" | first) "http" -}}
 
 {{/* Get the https_method defined by pods/services w/ the same vhost, falling back to "redirect" */}}
-{{ $https_method := or (groupByKeys $resources "ObjectMeta.Annotations.https_method" | first) "redirect" -}}
+{{ $https_method := or (groupByKeys $resources "ObjectMeta.Annotations.nginx_proxy.https_method" | first) "redirect" -}}
 
 {{/* Get the first cert name defined by containers w/ the same vhost */}}
-{{ $certName := (groupByKeys $resources "ObjectMeta.Annotations.cert_name" | first) -}}
+{{ $certName := (groupByKeys $resources "ObjectMeta.Annotations.nginx_proxy.cert_name" | first) -}}
 
 {{/* Get the best matching cert  by name for the vhost. */}}
 {{ $vhostCert := "" -}}
