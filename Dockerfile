@@ -24,7 +24,7 @@ RUN wget https://bin.equinox.io/c/ekMN3bCZFUn/forego-stable-linux-amd64.tgz \
   && rm forego-stable-linux-amd64.tgz \
   && wget https://github.com/kylemcc/kube-gen/releases/download/$KUBE_GEN_VERSION/kube-gen-linux-amd64-$KUBE_GEN_VERSION.tar.gz \
   && tar -C /usr/local/bin -xvzf kube-gen-linux-amd64-$KUBE_GEN_VERSION.tar.gz \
-  && rm /kube-gen-linux-amd64-$KUBE_GEN_VERSION \
+  && rm kube-gen-linux-amd64-$KUBE_GEN_VERSION.tar.gz \
   && chmod +x /usr/local/bin/forego \
   && chmod +x /usr/local/bin/kubectl \
   && chmod +x /usr/local/bin/kube-gen
