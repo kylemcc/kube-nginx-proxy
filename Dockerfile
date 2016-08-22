@@ -22,7 +22,7 @@ ADD https://storage.googleapis.com/kubernetes-release/release/v1.3.4/bin/linux/a
 RUN wget https://bin.equinox.io/c/ekMN3bCZFUn/forego-stable-linux-amd64.tgz \
   && tar -C /usr/local/bin -xzvf forego-stable-linux-amd64.tgz \
   && rm forego-stable-linux-amd64.tgz \
-  && wget https://github.com/kylemcc/kube-gen/releases/download/$KUBE_GEN_VERSION/kube-gen-linux-amd64-$KUBE_GEN_VERSION.1.0.tar.gz \
+  && wget https://github.com/kylemcc/kube-gen/releases/download/$KUBE_GEN_VERSION/kube-gen-linux-amd64-$KUBE_GEN_VERSION.tar.gz \
   && tar -C /usr/local/bin -xvzf kube-gen-linux-amd64-$KUBE_GEN_VERSION.tar.gz \
   && rm /kube-gen-linux-amd64-$KUBE_GEN_VERSION \
   && chmod +x /usr/local/bin/forego \
