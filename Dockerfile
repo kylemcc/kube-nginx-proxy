@@ -2,10 +2,10 @@ FROM nginx:1.9.15
 MAINTAINER Kyle McCullough kylemcc@gmail.com
 
 # Install available package updates, wget, and install/updates certificates
-RUN wget -qO- https://nginx.org/keys/nginx_signing.key | apt-key add \
-  && apt-get update \
-  && apt-get upgrade -y \
+RUN  apt-get update \
   && apt-get install -y -q --no-install-recommends ca-certificates wget \
+  && wget -qO- https://nginx.org/keys/nginx_signing.key | apt-key add \
+  && apt-get upgrade -y \
   && apt-get clean \
   && rm -r /var/lib/apt/lists/*
 
