@@ -17,7 +17,7 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf \
   && rm -f /etc/nginx/conf.d/default.conf
 
 # install forego, kube-gen, and kubectl
-ENV KUBE_GEN_VERSION 0.1.0
+ENV KUBE_GEN_VERSION 0.1.1
 ADD https://storage.googleapis.com/kubernetes-release/release/v1.3.4/bin/linux/amd64/kubectl /usr/local/bin
 RUN wget https://bin.equinox.io/c/ekMN3bCZFUn/forego-stable-linux-amd64.tgz \
   && tar -C /usr/local/bin -xzvf forego-stable-linux-amd64.tgz \
