@@ -60,9 +60,9 @@ spec:
 
 Annotations are used to discover Pods and Services and configure reverse proxy settings. Currently, the following annotations are supported:
 
-- proxy_host: (required) The target hostname for the reverse proxy. Requests to this hostname will be routed to the corresponding Pod/Service. Multiple hostnames may be provided as a comma-separated string.
-- proxy_port: (default: 80) The Pod/Service port to which requests should be proxied. Only one port per Pod/Service is supported. If more than one port is required (e.g., for a pod running multiple containers), separate Services should be created with distinct proxy_host/proxy_port combinations.
-- proxy_proto: (default: http) The protocol over which requests should be proxied. `http` and `https` are supported.
+- **proxy_host**: (required) The target hostname for the reverse proxy. Requests to this hostname will be routed to the corresponding Pod/Service. Multiple hostnames may be provided as a comma-separated string.
+- **proxy_port**: (default: 80) The Pod/Service port to which requests should be proxied. Only one port per Pod/Service is supported. If more than one port is required (e.g., for a pod running multiple containers), separate Services should be created with distinct proxy_host/proxy_port combinations.
+- **proxy_proto**: (default: http) The protocol over which requests should be proxied. `http` and `https` are supported.
 
 
 See below for example Service and Pod definitions:
