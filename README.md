@@ -56,6 +56,70 @@ spec:
       terminationGracePeriodSeconds: 30
 ```
 
+### Configuration
+
+Annotations are used to discover Pods and Services and configure reverse proxy settings. Currently, the following annotations are supported:
+
+- proxy_host: (required) The target hostname for the reverse proxy. Requests to this hostname will be routed to the corresponding Pod/Service. Multiple hostnames may be provided as a comma-separated string.
+- proxy_port: (default: 80) The Pod/Service port to which requests should be proxied. Only one port per Pod/Service is supported. If more than one port is required (e.g., for a pod running multiple containers), separate Services should be created with distinct proxy_host/proxy_port combinations.
+- proxy_proto: (default: http) The protocol over which requests should be proxied. `http` and `https` are supported.
+
+
+See below for example Service and Pod definitions:
+
+Pod:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    proxy_host: logstash.foo.com
+    proxy_port: 5044
+  labels:
+    app: logstash
+  name: logstash
+spec:
+  containers:
+    - image: logstash:2.3.4
+      name: logstash
+      ports:
+        - containerPort: 5044
+          protocol: TCP
+```
+
+Service:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: "elasticsearch"
+  labels:
+    app: "elasticsearch"
+  annotations:
+    proxy_host: search.foo.com
+    proxy_port: 80 # should be the same as the service port
+spec:
+  ports:
+    - port: 80
+      targetPort: 9200
+      protocol: TCP
+      name: http
+    - port: 9300
+      targetPort: 9300
+      protocol: TCP
+      name: transport
+  selector:
+    app: elasticsearch
+```
+
+### TODO
+
+- SSL Support
+- TCP/UDP Proxying?
+- Custom nginxconfiguration
+
 [1]: https://github.com/kylemcc/kube-gen
 [2]: http://kubernetes.io/docs/admin/daemons/
 [3]: https://github.com/kylemcc/kube-nginx-proxy/blob/master/kube-nginx-proxy-daemonset.yaml
