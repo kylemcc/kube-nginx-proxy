@@ -93,7 +93,7 @@ upstream {{ $host }} {
 {{ end -}}
 }
 
-{{ $default_host := "" -}}
+{{ $default_host := coalesce $.Env.DEFAULT_HOST "" -}}
 {{ $default_server := index (dict $host "" $default_host "default_server") $host -}}
 
 {{/* Get the proxy_proto defined by pods/services w/ the same vhost, falling back to "http" */}}
