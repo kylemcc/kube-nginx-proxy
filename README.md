@@ -119,6 +119,7 @@ spec:
 - SSL Support
 - TCP/UDP Proxying?
 - Custom nginxconfiguration
+- Session Affinity Support
 
 [1]: https://github.com/kylemcc/kube-gen
 [2]: http://kubernetes.io/docs/admin/daemons/
