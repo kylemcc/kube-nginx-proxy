@@ -118,7 +118,8 @@ spec:
 
 - SSL Support
 - TCP/UDP Proxying?
-- Custom nginxconfiguration
+- Custom nginx configuration, template
+- Make it easy to use a ConfigMap to mount custom configuration
 - Session Affinity Support
 
 [1]: https://github.com/kylemcc/kube-gen

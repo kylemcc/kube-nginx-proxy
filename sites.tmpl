@@ -66,7 +66,7 @@ server {
 upstream {{ $host }} {
 {{- range $resource := $resources -}}
 	{{ if hasField $resource ".Spec.ClusterIP" -}}
-		{{/* Resource is a service Service -*/}}
+		{{/* Resource is a Service -*/}}
 		{{ $addr := $resource.Spec.ClusterIP -}}
 		{{ if len .Spec.Ports | eq 1 -}}
 			{{/* if only 1 port is exposed, use that -*/}}
