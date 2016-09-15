@@ -78,7 +78,7 @@ upstream {{ $host }} {
 			{{ $port := coalesce $resource.ObjectMeta.Annotations.proxy_port "80" -}}
 			{{ template "upstream" (dict "Address" $addr "Port" $port) -}}
 		{{ end -}}
-	{{ else if hasField $resource ".Status.PodIP" }}
+	{{ else if and (hasField $resource ".Status.PodIP") (isPodReady $resource) }}
 		{{/* Pod */}}
 		{{ $addr := $resource.Status.PodIP -}}
 		{{ if and (len .Spec.Containers | eq 1) (len (first .Spec.Containers).Ports | eq 1) }}
