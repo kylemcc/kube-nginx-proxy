@@ -60,7 +60,8 @@ server {
 }
 {{ end -}}
 
-{{ $all := whereExist (combine .Pods .Services) "ObjectMeta.Annotations.proxy_host" -}}
+{{- $readyPods := readyPods .Pods }}
+{{ $all := whereExist (combine $readyPods .Services) "ObjectMeta.Annotations.proxy_host" -}}
 {{- range $host, $resources := groupByMulti $all "ObjectMeta.Annotations.proxy_host" "," -}}
 
 upstream {{ $host }} {
