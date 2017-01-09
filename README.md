@@ -18,7 +18,7 @@ metadata:
   name: "kube-nginx-proxy"
   labels:
     app: "kube-nginx-proxy"
-    version: "0.1.0"
+    version: "0.1.3"
   namespace: "dev"
   annotations:
     description: "nginx reverse proxy for services and pods powered by annotations"
@@ -37,7 +37,7 @@ spec:
       containers:
         -
           name: "kube-nginx-proxy"
-          image: "kylemcc/kube-nginx-proxy:0.1.0"
+          image: "kylemcc/kube-nginx-proxy:0.1.3"
           resources:
             requests:
               cpu: "100m"
@@ -118,8 +118,6 @@ spec:
 
 - SSL Support
 - TCP/UDP Proxying?
-- Custom nginx configuration, template
-- Make it easy to use a ConfigMap to mount custom configuration
 - Session Affinity Support
 
 [1]: https://github.com/kylemcc/kube-gen
