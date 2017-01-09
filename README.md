@@ -114,6 +114,89 @@ spec:
     app: elasticsearch
 ```
 
+### Custom nginx Configuration
+
+The default nginx and proxy configurations can be easily overridden with using a [ConfigMap][4] containing
+a custom configuration and specifying the [subPath][5] option in the volumeMount.  E.g.:
+
+ConfigMap specifying a custom nginx.conf and proxy.conf:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-proxy-conf-v1
+data:
+  proxy.conf: |-
+    # HTTP 1.1 support
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_set_header Host $http_host;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $proxy_connection;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
+    proxy_read_timeout 10m;
+    client_max_body_size 25m;
+  nginx.conf: |-
+    user  nginx;
+    worker_processes  2;
+    daemon off;
+    
+    error_log  /var/log/nginx/error.log warn;
+    pid        /var/run/nginx.pid;
+    
+    
+    events {
+        worker_connections  1024;
+        multi_accept on;
+    }
+    
+    
+    http {
+        server_names_hash_bucket_size 128;
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+    
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+    
+        access_log  /var/log/nginx/access.log  main;
+
+        sendfile        on;
+        keepalive_timeout  65;
+        gzip  on;
+        include /etc/nginx/conf.d/*.conf;
+    }
+```
+
+Volume configuration:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+spec:
+  template:
+    spec:
+      containers:
+        -
+          name: "kube-nginx-proxy"
+          image: "kylemcc/kube-nginx-proxy:0.1.3"
+          volumeMounts:
+            - name: nginx-proxy-config
+              mountPath: /etc/nginx/proxy.conf
+              subPath: proxy.conf
+            - name: nginx-proxy-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        - name: nginx-proxy-config
+          configMap:
+            name: nginx-proxy-conf-v1
+```
+
 ### TODO
 
 - SSL Support
@@ -123,3 +206,5 @@ spec:
 [1]: https://github.com/kylemcc/kube-gen
 [2]: http://kubernetes.io/docs/admin/daemons/
 [3]: https://github.com/kylemcc/kube-nginx-proxy/blob/master/kube-nginx-proxy-daemonset.yaml
+[4]: http://kubernetes.io/docs/user-guide/configmap/
+[5]: http://kubernetes.io/docs/user-guide/volumes/#using-subpath
