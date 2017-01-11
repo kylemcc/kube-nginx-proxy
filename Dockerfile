@@ -1,4 +1,4 @@
-FROM nginx:1.9.15
+FROM nginx:1.11.8
 MAINTAINER Kyle McCullough kylemcc@gmail.com
 
 # Install available package updates, wget, and install/updates certificates

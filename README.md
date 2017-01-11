@@ -1,6 +1,6 @@
 # kube-nginx-proxy
 ![latest 0.1.3](https://img.shields.io/badge/latest-0.1.3-green.svg?style=flat)
-![nginx 1.9.15](https://img.shields.io/badge/nginx-1.9.15-brightgreen.svg?style=flat)
+![nginx 1.11.8](https://img.shields.io/badge/nginx-1.11.8-brightgreen.svg?style=flat)
 ![License BSD](https://img.shields.io/badge/license-BSD-red.svg?style=flat)
 [![](https://img.shields.io/docker/stars/kylemcc/kube-nginx-proxy.svg?style=flat)](https://hub.docker.com/r/kylemcc/kube-nginx-proxy 'DockerHub')
 [![](https://img.shields.io/docker/pulls/kylemcc/kube-nginx-proxy.svg?style=flat)](https://hub.docker.com/r/kylemcc/kube-nginx-proxy 'DockerHub')
