@@ -20,13 +20,13 @@ action "Docker Registry" {
 action "Build Image" {
   uses = "actions/docker/cli@8cdf801b322af5f369e00d85e9cf3a7122f49108"
   needs = ["Docker Registry"]
-  args = "build -t kylemcc/kube-nginx-proxy ."
+  args = "build -t kube-nginx-proxy ."
 }
 
 action "Tag Image" {
   uses = "actions/docker/tag@8cdf801b322af5f369e00d85e9cf3a7122f49108"
   needs = ["Build Image"]
-  args = "--env kylemcc/kube-nginx-proxy kylemcc/kube-nginx-proxy"
+  args = "--env kube-nginx-proxy kylemcc/kube-nginx-proxy"
 }
 
 action "Push Image" {
