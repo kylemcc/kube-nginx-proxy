@@ -1,6 +1,8 @@
 FROM nginx:1.11.8
 MAINTAINER Kyle McCullough kylemcc@gmail.com
 
+LABEL version="0.1.3"
+
 # Install available package updates, wget, and install/updates certificates
 ADD https://nginx.org/keys/nginx_signing.key /tmp/nginx_signing.key
 RUN apt-key add /tmp/nginx_signing.key \
