@@ -1,12 +1,10 @@
-FROM nginx:1.11.8
-MAINTAINER Kyle McCullough kylemcc@gmail.com
+FROM nginx:1.14.2
+LABEL maintainer="Kyle McCullough <kylemcc@gmail.com>"
 
-LABEL version="0.1.3"
+LABEL version="0.2.0"
 
 # Install available package updates, wget, and install/updates certificates
-ADD https://nginx.org/keys/nginx_signing.key /tmp/nginx_signing.key
-RUN apt-key add /tmp/nginx_signing.key \
-  && apt-get update \
+RUN apt-get update \
   && apt-get install -y -q --no-install-recommends ca-certificates wget \
   && apt-get upgrade -y \
   && apt-get clean \
@@ -19,8 +17,8 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf \
   && rm -f /etc/nginx/conf.d/default.conf
 
 # install forego, kube-gen, and kubectl
-ENV KUBE_GEN_VERSION 0.1.3
-ADD https://storage.googleapis.com/kubernetes-release/release/v1.3.4/bin/linux/amd64/kubectl /usr/local/bin
+ENV KUBE_GEN_VERSION 0.3.0
+ADD https://storage.googleapis.com/kubernetes-release/release/v1.8.15/bin/linux/amd64/kubectl /usr/local/bin/
 RUN wget https://bin.equinox.io/c/ekMN3bCZFUn/forego-stable-linux-amd64.tgz \
   && tar -C /usr/local/bin -xzvf forego-stable-linux-amd64.tgz \
   && rm forego-stable-linux-amd64.tgz \
