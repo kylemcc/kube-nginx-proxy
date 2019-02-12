@@ -1,6 +1,9 @@
 workflow "Build and Publish Docker Image" {
   on = "push"
-  resolves = ["GitHub Action for Docker", "Tag Image"]
+  resolves = [
+    "Tag Image",
+    "Push Image",
+  ]
 }
 
 action "Master Branch Filter" {
@@ -26,7 +29,7 @@ action "Tag Image" {
   args = "--env kylemcc/kube-nginx-proxy kylemcc/kube-nginx-proxy"
 }
 
-action "GitHub Action for Docker" {
+action "Push Image" {
   uses = "actions/docker/cli@8cdf801b322af5f369e00d85e9cf3a7122f49108"
   needs = ["Tag Image"]
   args = "push kylemcc/kube-nginx-proxy"
