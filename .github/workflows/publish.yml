@@ -1,0 +1,49 @@
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request: {}
+name: Build and Publish
+jobs:
+  build_and_publish:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: '[Dockerhub] Docker login'
+      uses: actions/docker/login@master
+      env:
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+    - name: '[Github] Docker login'
+      uses: actions/docker/login@master
+      env:
+        DOCKER_PASSWORD: '${{ secrets.GH_DOCKER_PASSWORD }}'
+        DOCKER_USERNAME: $GITHUB_ACTOR
+        DOCKER_REGISTRY_URL: docker.pkg.github.com
+    - name: Build Image
+      uses: actions/docker/cli@master
+      with:
+        args: build -t kube-nginx-proxy .
+    - name: '[Dockerhub] Tag Image'
+      uses: actions/docker/tag@master
+      if: github.ref == 'master' || github.event_name == 'release'
+      with:
+        args: --env kube-nginx-proxy kylemcc/kube-nginx-proxy
+    - name: '[Github] Tag Image'
+      uses: actions/docker/tag@master
+      if: github.ref == 'master' || github.event_name == 'release'
+      with:
+        args: --env kube-nginx-proxy docker.pkg.github.com/kylemcc/kube-nginx-proxy/kube-nginx-proxy
+    - name: '[Dockerhub] Push Image'
+      uses: actions/docker/cli@master
+      if: github.ref == 'master' || github.event_name == 'release'
+      with:
+        args: push kylemcc/kube-nginx-proxy
+    - name: '[Github] Push Image'
+      uses: actions/docker/cli@master
+      if: github.ref == 'master' || github.event_name == 'release'
+      with:
+        args: push docker.pkg.github.com/kylemcc/kube-nginx-proxy/kube-nginx-proxy
