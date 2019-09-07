@@ -47,3 +47,9 @@ jobs:
       if: github.ref == 'master' || github.event_name == 'release'
       with:
         args: push docker.pkg.github.com/kylemcc/kube-nginx-proxy/kube-nginx-proxy
+    - name: Send Slack Notification
+      uses: kylemcc/actions/slack-webhook@master
+      if: always() && (github.ref == 'master' || github.event_name == 'release')
+      env:
+        SLACK_MESSAGE: '$GITHUB_REPOSITORY: Build ${{ job.status }}'
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
