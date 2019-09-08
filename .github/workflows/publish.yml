@@ -29,27 +29,27 @@ jobs:
         args: build -t kube-nginx-proxy .
     - name: '[Dockerhub] Tag Image'
       uses: actions/docker/tag@master
-      if: github.ref == 'master' || github.event_name == 'release'
+      if: github.ref == 'refs/heads/master' || github.event_name == 'release'
       with:
         args: --env kube-nginx-proxy kylemcc/kube-nginx-proxy
     - name: '[Github] Tag Image'
       uses: actions/docker/tag@master
-      if: github.ref == 'master' || github.event_name == 'release'
+      if: github.ref == 'refs/heads/master' || github.event_name == 'release'
       with:
         args: --env kube-nginx-proxy docker.pkg.github.com/kylemcc/kube-nginx-proxy/kube-nginx-proxy
     - name: '[Dockerhub] Push Image'
       uses: actions/docker/cli@master
-      if: github.ref == 'master' || github.event_name == 'release'
+      if: github.ref == 'refs/heads/master' || github.event_name == 'release'
       with:
         args: push kylemcc/kube-nginx-proxy
     - name: '[Github] Push Image'
       uses: actions/docker/cli@master
-      if: github.ref == 'master' || github.event_name == 'release'
+      if: github.ref == 'refs/heads/master' || github.event_name == 'release'
       with:
         args: push docker.pkg.github.com/kylemcc/kube-nginx-proxy/kube-nginx-proxy
     - name: Send Slack Notification
       uses: kylemcc/actions/slack-webhook@master
-      if: always() && (github.ref == 'master' || github.event_name == 'release')
+      if: always() && (github.ref == 'refs/heads/master' || github.event_name == 'release')
       env:
         SLACK_MESSAGE: '$GITHUB_REPOSITORY: Build ${{ job.status }}'
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
