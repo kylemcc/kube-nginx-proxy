@@ -116,6 +116,8 @@ upstream {{ $host }} {
 {{/* Use the cert specified on the container or fallback to the best vhost match */}}
 {{ $cert := (coalesce $certName $vhostCert) -}}
 
+{{ $location_block_header := $resource.ObjectMeta.Annotations.location_block_header -}}
+
 {{ $is_https := (and (ne $cert "") (exists (printf "/etc/nginx/certs/%s.crt" $cert)) (exists (printf "/etc/nginx/certs/%s.key" $cert))) -}}
 
 {{- if $is_https -}}
@@ -177,14 +179,15 @@ server {
 		{{ else if (exists "/etc/nginx/vhost.d/default_location") -}}
 			include /etc/nginx/vhost.d/default_location;
 		{{ end -}}
-		}
-	{{ if (exists "/etc/nginx/additional_location_block_header") }}
-		include /etc/nginx/additional_location_block_header;
-			proxy_pass {{ trim $proto }}://{{ trim $host }};
-			{{ if (exists "/etc/nginx/additional_location_block_includes") }}
-				include /etc/nginx/additional_location_block_includes;
-			{{ end -}}
-		}
+	}
+
+	{{ if (ne $location_block_header) -}}
+	location {{ (trim $location_blocker_header) }} {
+		proxy_pass {{ trim $proto }}://{{ trim $host }};
+		{{ if (exists "/etc/nginx/additional_location_block_includes") -}}
+		include /etc/nginx/additional_location_block_includes;
+		{{ end -}}
+	}
 	{{ end -}}
 }
 
