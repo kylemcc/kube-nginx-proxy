@@ -182,7 +182,7 @@ server {
 	}
 
 	{{ if (ne $location_block_header) -}}
-	location {{ (trim $location_blocker_header) }} {
+	location {{ (trim $location_block_header) }} {
 		proxy_pass {{ trim $proto }}://{{ trim $host }};
 		{{ if (exists "/etc/nginx/additional_location_block_includes") -}}
 		include /etc/nginx/additional_location_block_includes;
