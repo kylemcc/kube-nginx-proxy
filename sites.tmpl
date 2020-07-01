@@ -116,7 +116,8 @@ upstream {{ $host }} {
 {{/* Use the cert specified on the container or fallback to the best vhost match */}}
 {{ $cert := (coalesce $certName $vhostCert) -}}
 
-{{ $location_block_header := coalesce $resource.ObjectMeta.Annotations.location_block_header "" -}}
+{{ $location_block_header_raw := (groupByKeys $resources "ObjectMeta.Annotations.location_block_header" | first) -}}
+{{ $location_block_header := coalesce $location_block_header_raw "" -}}
 
 {{ $is_https := (and (ne $cert "") (exists (printf "/etc/nginx/certs/%s.crt" $cert)) (exists (printf "/etc/nginx/certs/%s.key" $cert))) -}}
 
