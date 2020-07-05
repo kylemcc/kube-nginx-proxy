@@ -1,7 +1,7 @@
 FROM nginx:1.14.2
 LABEL maintainer="Kyle McCullough <kylemcc@gmail.com>"
 
-LABEL version="0.2.1"
+LABEL version="0.2.2"
 
 # Install available package updates, wget, and install/updates certificates
 RUN apt-get update \
