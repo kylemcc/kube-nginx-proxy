@@ -1,5 +1,5 @@
 FROM nginx:1.14.2
-LABEL maintainer="Khaliq Gant <khaliqgant@gmail.com>"
+LABEL maintainer="Kyle McCullough <kylemcc@gmail.com>"
 
 LABEL version="0.2.2"
 
